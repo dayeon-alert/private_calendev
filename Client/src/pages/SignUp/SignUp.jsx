@@ -65,6 +65,7 @@ export default function SignUp() {
   const [userNicknameMsgCode, setUserNicknameMsgCode] = useState(101);
   const [userEmailErrCode, setUserEmailErrCode] = useState(0);
   const [allowTerms, setAllowTerms] = useState(checkData);
+  const [nicknameDuplCheck, setNicknameDuplCheck] = useState(false);
 
   useEffect(() => {
     setAllowTerms(checkData);
@@ -90,7 +91,7 @@ export default function SignUp() {
   const handleNicknameInput = (e) => {
     const userNickname = e.target.value;
 
-    // 중복 확인 버튼 활성화되어 있을 경우 비활성화
+    setNicknameDuplCheck(false);
     if(userNickname.length < 1) {
       setUserNicknameMsgCode(101);
     }
@@ -98,28 +99,30 @@ export default function SignUp() {
       setUserNicknameMsgCode(102);
     }
     else{
-      // 중복 확인 버튼 활성화
+      setNicknameDuplCheck(true);
       setUserNicknameMsgCode(104);
     }
   }
 
   function handleUserNickname() {
-    axios.get(`${url}/api/v1/nicknames/duplicate`).then((response) => {
-      const { nickname_is_unique } = response.data
-      if(nickname_is_unique) {
-        setUserNicknameMsgCode(100);
-        // 중복 확인 버튼 비활성화
-        // 다음 입력창으로 focus 이동
-      }
-      else{
-        setUserNicknameMsgCode(105);
-      }
-    })
+    return axios
+            .get(`${url}/api/v1/nicknames/duplicate`)
+            .then((response) => {
+              const { nickname_is_unique } = response.data;
+              if(nickname_is_unique) {
+                setUserNicknameMsgCode(100);
+                // 다음 입력창으로 focus 이동
+            }
+            else{
+              setUserNicknameMsgCode(105);
+            }
+          })
   }
 
   function handleUserEmail() {
     axios.get(`${url}/api/v1/users/duplicate`).then((response)=> {
-      const { user_is_unique } = response.data
+      const { user_is_unique } = response.data;
+      console.log("Email" + response.data);
       if(user_is_unique){
         setUserEmailErrCode(1);
       }
@@ -135,11 +138,27 @@ export default function SignUp() {
 
   return (
     <StyledPaper>
-      <Typography variant="h5">
+      <Typography variant="h4" sx={{fontWeight: 'bold'}}>
           회원가입
       </Typography>
       <Stack component="form" onSubmit={handleSubmit} spacing={2}>
         <Stack spacing={1}>
+          <Stack direction="row" alignItems="flex-start" spacing={1}>
+            <StyledTextField
+              placeholder="이메일"
+              name="email"
+              usererrcode={userEmailErrCode}
+              autoComplete="email"
+            />
+            <StyledDuplicateButton
+              size="small"
+              variant="contained"
+              color="primary"
+              onClick={handleUserEmail}
+            >
+              중복확인
+            </StyledDuplicateButton>
+          </Stack>
           <Stack direction="row" alignItems="flex-start" spacing={1}>
             <StyledTextField
               onInput={handleNicknameInput}
@@ -154,23 +173,7 @@ export default function SignUp() {
               variant="contained"
               color="primary"
               onClick={handleUserNickname}
-              disabled={true}
-            >
-              중복확인
-            </StyledDuplicateButton>
-          </Stack>
-          <Stack direction="row" alignItems="flex-start" spacing={1}>
-            <StyledTextField
-              placeholder="이메일"
-              name="email"
-              usererrcode={userEmailErrCode}
-              autoComplete="email"
-            />
-            <StyledDuplicateButton
-              size="small"
-              variant="contained"
-              color="primary"
-              onClick={handleUserEmail}
+              disabled={!nicknameDuplCheck}
             >
               중복확인
             </StyledDuplicateButton>
@@ -231,7 +234,7 @@ const StyledFormControlLabel = styled(CustomFormControlLabel)`
   & .Checkbox {
     padding: ${props => props.theme.spacing(0.5, 1)};
     & .MuiSvgIcon-root {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
     }
   }   
 `;
