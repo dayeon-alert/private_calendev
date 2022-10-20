@@ -33,8 +33,6 @@ function CustomTextField(props){
   );
 }
 
-
-
 /*
 1. 별명은 1자 이상 30자 미만으로 입력해주세요.
 2. 특수문자는 @#~만 입력해주세요
@@ -151,7 +149,7 @@ export default function SignUp() {
               autoComplete="off"
               inputProps={{maxLength:30}}
             />
-            <Button
+            <StyledDuplicateButton
               size="small"
               variant="contained"
               color="primary"
@@ -159,7 +157,7 @@ export default function SignUp() {
               disabled={true}
             >
               중복확인
-            </Button>
+            </StyledDuplicateButton>
           </Stack>
           <Stack direction="row" alignItems="flex-start" spacing={1}>
             <StyledTextField
@@ -168,14 +166,14 @@ export default function SignUp() {
               usererrcode={userEmailErrCode}
               autoComplete="email"
             />
-            <Button
+            <StyledDuplicateButton
               size="small"
               variant="contained"
               color="primary"
               onClick={handleUserEmail}
             >
               중복확인
-            </Button>
+            </StyledDuplicateButton>
           </Stack>
           <StyledTextField
             name="password"
@@ -223,6 +221,10 @@ export default function SignUp() {
 
 const StyledButton = styled(Button)`
   padding: ${props => props.theme.spacing(5)}, 0;
+`;
+
+const StyledDuplicateButton = styled(Button)`
+  min-width: 80px;
 `;
 
 const StyledFormControlLabel = styled(CustomFormControlLabel)`
