@@ -6,10 +6,10 @@ const CustomPaper = styled(Paper)`
   flex-direction: column;
   align-items: center;
   width: auto;
-  padding: ${(props) => props.theme.spacing(4, 1)};
+  padding: ${(props) => props.theme.spacing(4, 4)};
   margin: ${(props) => props.theme.spacing(12, 1, 'auto')};
-  ${(props) => props.theme.breakpoints.up('sm')} {
-    width: 400px;
+  ${(props) => props.theme.breakpoints.up('mobile')} {
+    width: 350px;
     margin: ${(props) => props.theme.spacing(12, 'auto', 'auto')};
   }
 `;
