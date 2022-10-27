@@ -39,6 +39,9 @@ function commonMsgText(msgObj) {
   if (code === 109) {
     return '비밀번호와 일치하지 않습니다.';
   }
+  if (code === 111) {
+    return '이용약관과 개인정보 수집 및 이용에 대한 안내 모두 동의해주세요.';
+  }
 
   return '';
 }
