@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import styled from '@emotion/styled';
@@ -10,7 +10,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import CustomPaper from '../../components/CustomPaper';
@@ -37,27 +36,15 @@ export default function SignUp() {
   const [pwdMsgObj, setPwdMsgObj] = useState({ code: 0, arg1: '' });
   const [pwdConfirmMsgObj, setPwdConfirmMsgObj] = useState({ code: 0, arg1: '' });
   const [allowTerms, setAllowTerms] = useState(checkData);
-
+  const [termsMsgObj, setTermsMsgObj] = useState({ code: 0, arg1: '' });
   const [values, setValues] = useState({
     nickname: '',
     email: '',
-    password: '1234',
-    passwordConfirm: '5678',
+    password: '',
+    passwordConfirm: '',
     showPassword: false,
     showConfirmPassword: false,
   });
-
-  useEffect(() => {
-    setAllowTerms(checkData);
-    setValues({
-      nickname: '',
-      email: '',
-      password: '',
-      passwordConfirm: '',
-      showPassword: false,
-      showConfirmPassword: false,
-    });
-  }, []);
 
   const checkNicknameDuplicate = () => {
     axios
@@ -79,10 +66,10 @@ export default function SignUp() {
       .then((response) => {
         const emailIsUnique = response.data.email_is_unique;
         if (emailIsUnique) {
-          setEmailMsgObj({ code: 100, arg1: '메일' });
+          setEmailMsgObj({ code: 110, arg1: '이메일' });
           // 다음 입력창으로 focus 이동
         } else {
-          setEmailMsgObj({ code: 105, arg1: '메일' });
+          setEmailMsgObj({ code: 105, arg1: '이메일' });
         }
       });
   };
@@ -134,6 +121,12 @@ export default function SignUp() {
       setPwdMsgObj({ code: 108, arg1: '비밀번호' });
       return;
     }
+
+    // pwdInputVal의 길이가 2보다 클 때,
+    // 직전 것, 두번째 전 것을 비교한다
+    // 셋이 전부 같거나 연속적이어야 한다.
+    // CapsLock 켜져 있을 때 경고 문구
+    // 이메일 앞부분과 일치하는 비밀번호 사용 불가능
 
     if (pwdInputVal.length < 8) {
       setPwdMsgObj({ code: 106, arg1: '비밀번호' });
@@ -199,8 +192,36 @@ export default function SignUp() {
     event.preventDefault();
   };
 
-  const handleChange = () => {
-    // Component와 연결된 isChecked를 true 혹은 false로 변경한다.
+  const handleAllTermChange = (event) => {
+    const tempAllowTerms = [];
+    setTermsMsgObj({ code: 100 });
+
+    allowTerms.forEach((allowTerm) => {
+      tempAllowTerms.push({ ...allowTerm, isChecked: event.target.checked });
+    });
+
+    setAllowTerms(tempAllowTerms);
+
+    if (!event.target.checked) {
+      setTermsMsgObj({ code: 111 });
+    }
+  };
+
+  const handleSingleChange = (event) => {
+    const tempAllowTerms = [];
+    setTermsMsgObj({ code: 100 });
+
+    allowTerms.forEach((allowTerm) => {
+      const tempChangeTerm = allowTerm.labelText === event.target.ariaLabel
+        ? { ...allowTerm, isChecked: event.target.checked }
+        : allowTerm;
+      tempAllowTerms.push(tempChangeTerm);
+      if (!tempChangeTerm.isChecked) {
+        setTermsMsgObj({ code: 111 });
+      }
+    });
+
+    setAllowTerms(tempAllowTerms);
   };
 
   const handleSubmit = (event) => {
@@ -225,7 +246,7 @@ export default function SignUp() {
       <Typography sx={{ fontWeight: 'bold' }} variant="h4">
         회원가입
       </Typography>
-      <Stack component="form" onSubmit={handleSubmit} spacing={2} sx={{ width: '100%' }}>
+      <Stack component="form" onSubmit={handleSubmit} spacing={2}>
         <Stack spacing={1}>
           <Stack alignItems="flex-start" direction="row" spacing={1}>
             <StyledTextField
@@ -321,31 +342,33 @@ export default function SignUp() {
         </Stack>
         <Stack>
           <StyledFormControlLabel
-            controlvalue="allowAllTerms"
+            control={<Checkbox onChange={handleAllTermChange} />}
             labeltext="전체 동의"
-            onChange={handleChange}
+            checked={termsMsgObj.code !== 111 && termsMsgObj.code !== 0}
           />
           {
             allowTerms.map((allowTerm) => (
               <StyledFormControlLabel
+                control={<Checkbox onChange={handleSingleChange} inputProps={{ 'aria-label': allowTerm.labelText }} />}
                 checked={allowTerm.isChecked}
                 key={allowTerm.labelText}
                 labeltext={allowTerm.labelText}
-                onChange={handleChange}
               />
             ))
           }
         </Stack>
+        <Typography variant="caption" color="error">{commonMsgText(termsMsgObj)}</Typography>
         <StyledFullButton
           color="primary"
           fullWidth
           size="small"
           type="submit"
           variant="contained"
-          disabled={(emailMsgObj.code === 110
+          disabled={!(emailMsgObj.code === 110
                     && nicknameMsgObj.code === 110
                     && pwdMsgObj.code === 110
-                    && pwdConfirmMsgObj.code === 100) || true}
+                    && pwdConfirmMsgObj.code === 100
+                    && termsMsgObj.code === 100)}
         >
           회원가입
         </StyledFullButton>
@@ -405,7 +428,6 @@ function CustomFormControlLabel(props) {
   const { labeltext } = props;
   return (
     <FormControlLabel
-      control={<Checkbox className="Checkbox" />}
       label={(
         <Typography variant="body2">
           {labeltext}
@@ -421,12 +443,14 @@ CustomFormControlLabel.propTypes = {
 };
 
 const StyledFormControlLabel = styled(CustomFormControlLabel)`
-  & .Checkbox {
+  pointer-events: none;
+  & .MuiCheckbox-root {
     padding: ${(props) => props.theme.spacing(0.5, 1)};
+    pointer-events: auto;
     & .MuiSvgIcon-root {
       font-size: 1.2rem;
     }
-  }   
+  }
 `;
 
 const StyledFullButton = styled(Button)`
